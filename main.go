@@ -8,20 +8,6 @@ import (
 	"path/filepath"
 )
 
-type Options struct {
-	Programs map[string]Program `json:"programs"`
-	Configs map[string]Config `json:"configs"`
-}
-
-type Program struct {
-	Description string `json:"description"`
-	RunCommand string `json:"runcommand"`
-}
-
-type Config struct {
-	Description string `json:"description"`
-	FullPath string `json:"fullpath"`
-}
 
 func createNewOptionsFile(homedir string) error {
 	someProgram := Program{Description: "program description", RunCommand: "'./path/to/program' or similar"}
