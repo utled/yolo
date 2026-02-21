@@ -8,7 +8,16 @@ func (model *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		model.width = msg.Width
 		model.height = msg.Height
 	case errMsg:
+	case optionsExistMsg:
+		if !msg.exists {
+			return model, model.createDefaultOptions()
+		}
+		return model, model.getOptions()
 	case optionsMsg:
+		model.options = msg.options
+		model.programNames = msg.programNames
+		model.configNames = msg.configNames
+		return model, model.createListItems()
 	case listItemsMsg:
 	case processStartedMsg:
 	case tea.KeyMsg:

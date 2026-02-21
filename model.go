@@ -1,6 +1,10 @@
 package main
 
 import (
+	"log"
+	"os"
+	"path/filepath"
+
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -23,7 +27,8 @@ type Config struct {
 type displayMode int
 
 const (
-	programDisplay displayMode = iota
+	allDisplay displayMode = iota
+	programDisplay
 	configDisplay
 )
 
@@ -32,6 +37,7 @@ type Model struct {
 	height       int
 	displayMode  displayMode
 	errorActive  bool
+	filepath     string
 	options      Options
 	programNames []string
 	configNames  []string
@@ -40,9 +46,16 @@ type Model struct {
 }
 
 func NewModel() Model {
-	return Model{}
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		log.Fatal("could not find user home dir:\n", err)
+	}
+	filepath := filepath.Join(homeDir, "/.yolo/optionFile.json")
+	return Model{
+		filepath: filepath,
+	}
 }
 
 func (model *Model) Init() tea.Cmd {
-	return nil
+	return model.checkIfOptionsExist()
 }
