@@ -7,6 +7,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 type Options struct {
@@ -24,25 +25,37 @@ type Config struct {
 	FullPath    string `json:"fullpath"`
 }
 
+type listItem struct {
+	title       string
+	description string
+}
+
+func (item listItem) Title() string       { return item.title }
+func (item listItem) Description() string { return item.description }
+func (item listItem) FilterValue() string { return item.title }
+
 type displayMode int
 
 const (
-	allDisplay displayMode = iota
+	combinedDisplay displayMode = iota
 	programDisplay
 	configDisplay
 )
 
 type Model struct {
-	width        int
-	height       int
-	displayMode  displayMode
-	errorActive  bool
-	filepath     string
-	options      Options
-	programNames []string
-	configNames  []string
-	programList  list.Model
-	configList   list.Model
+	width             int
+	height            int
+	docStyle          lipgloss.Style
+	displayMode       displayMode
+	errorActive       bool
+	filepath          string
+	options           Options
+	programNames      []string
+	configNames       []string
+	mainList          list.Model
+	combinedListItems []list.Item
+	programListItems  []list.Item
+	configListItems   []list.Item
 }
 
 func NewModel() Model {
@@ -51,8 +64,16 @@ func NewModel() Model {
 		log.Fatal("could not find user home dir:\n", err)
 	}
 	filepath := filepath.Join(homeDir, "/.yolo/optionFile.json")
+	mainList := list.New(
+		[]list.Item{
+			listItem{title: "default", description: "default"},
+		},
+		list.NewDefaultDelegate(), 0, 0,
+	)
 	return Model{
 		filepath: filepath,
+		docStyle: lipgloss.NewStyle().Margin(1, 2),
+		mainList: mainList,
 	}
 }
 

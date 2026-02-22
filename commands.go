@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -34,14 +35,14 @@ type optionsMsg struct {
 
 func (model *Model) createDefaultOptions() tea.Cmd {
 	return func() tea.Msg {
-		defaultProgram := Program{Description: "Neovim", RunCommand: "nvim"}
-		defaultConfig := Config{Description: "YOLO Options", FullPath: model.filepath}
+		defaultProgram := Program{Description: "standard editor", RunCommand: "nvim"}
+		defaultConfig := Config{Description: "programs and configs to launch", FullPath: model.filepath}
 
 		programsMap := make(map[string]Program)
-		programsMap["programDisplayName"] = defaultProgram
+		programsMap["Neovim"] = defaultProgram
 
 		configsMap := make(map[string]Config)
-		configsMap["configDisplayName"] = defaultConfig
+		configsMap["YOLO Options"] = defaultConfig
 
 		defaultOptions := Options{Programs: programsMap, Configs: configsMap}
 		jsonOptions, _ := json.MarshalIndent(defaultOptions, "", "  ")
@@ -77,7 +78,7 @@ func (model *Model) getOptions() tea.Cmd {
 	return func() tea.Msg {
 		optionFile, err := os.ReadFile(model.filepath)
 		if err != nil {
-			return errMsg(fmt.Errorf("failed to read option file:\n", err))
+			return errMsg(fmt.Errorf("failed to read option file:\n%v", err))
 		}
 		var options Options
 		if err := json.Unmarshal(optionFile, &options); err != nil {
@@ -102,13 +103,43 @@ func (model *Model) getOptions() tea.Cmd {
 }
 
 type listItemsMsg struct {
-	listItems string
-	listType  string
+	programList  []list.Item
+	configList   []list.Item
+	combinedList []list.Item
 }
 
 func (model *Model) createListItems() tea.Cmd {
 	return func() tea.Msg {
-		return listItemsMsg{}
+		var programList []list.Item
+		var configList []list.Item
+		var combinedList []list.Item
+
+		for _, program := range model.programNames {
+			programList = append(
+				programList,
+				listItem{
+					title:       program,
+					description: model.options.Programs[program].Description,
+				},
+			)
+		}
+		for _, config := range model.configNames {
+			configList = append(
+				configList,
+				listItem{
+					title:       config,
+					description: model.options.Configs[config].Description,
+				},
+			)
+		}
+		combinedList = append(combinedList, programList...)
+		combinedList = append(combinedList, configList...)
+
+		return listItemsMsg{
+			programList:  programList,
+			configList:   configList,
+			combinedList: combinedList,
+		}
 	}
 }
 

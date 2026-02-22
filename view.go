@@ -1,6 +1,8 @@
 package main
 
-import "github.com/charmbracelet/lipgloss"
+import (
+	"github.com/charmbracelet/lipgloss"
+)
 
 func (model *Model) renderOverlay() string {
 	modalStyle := lipgloss.NewStyle().
@@ -28,14 +30,6 @@ func (model *Model) renderOverlay() string {
 }
 
 func (model *Model) renderMain() string {
-	var mainDisplay string
-	switch model.displayMode {
-	case programDisplay:
-		mainDisplay = "program list"
-	case configDisplay:
-		mainDisplay = "config list"
-	}
-	
 	return lipgloss.Place(
 		model.width,
 		model.height,
@@ -44,7 +38,7 @@ func (model *Model) renderMain() string {
 		lipgloss.JoinVertical(
 			lipgloss.Left,
 			"search input field",
-			mainDisplay,
+			model.docStyle.Render(model.mainList.View()),
 		),
 	)
 }
