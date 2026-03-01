@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/table"
@@ -29,23 +30,16 @@ func (model *Model) checkIfOptionsExist() tea.Cmd {
 }
 
 type optionsMsg struct {
-	options      Options
-	programNames []string
-	configNames  []string
+	options     map[string]Option
+	optionNames []string
 }
 
 func (model *Model) createDefaultOptions() tea.Cmd {
 	return func() tea.Msg {
-		defaultProgram := Program{Description: "standard editor", RunCommand: "nvim"}
-		defaultConfig := Config{Description: "programs and configs to launch", FullPath: model.filepath}
+		defaultOptions := make(map[string]Option)
+		defaultOptions["Neovim"] = Option{Type: "program", CommandOrPath: "nvim"}
+		defaultOptions["YOLO Options"] = Option{Type: "config", CommandOrPath: model.filepath}
 
-		programsMap := make(map[string]Program)
-		programsMap["Neovim"] = defaultProgram
-
-		configsMap := make(map[string]Config)
-		configsMap["YOLO Options"] = defaultConfig
-
-		defaultOptions := Options{Programs: programsMap, Configs: configsMap}
 		jsonOptions, _ := json.MarshalIndent(defaultOptions, "", "  ")
 
 		dirPath := filepath.Dir(model.filepath)
@@ -67,10 +61,15 @@ func (model *Model) createDefaultOptions() tea.Cmd {
 			return fmt.Errorf("failed to write json to file\n%v", err)
 		}
 		file.Sync()
+
+		var optionNames []string
+		for key := range defaultOptions {
+			optionNames = append(optionNames, key)
+		}
+		slices.Sort(optionNames)
 		return optionsMsg{
-			options:      defaultOptions,
-			programNames: []string{"Neovim"},
-			configNames:  []string{"YOLO Options"},
+			options:     defaultOptions,
+			optionNames: optionNames,
 		}
 	}
 }
@@ -81,25 +80,51 @@ func (model *Model) getOptions() tea.Cmd {
 		if err != nil {
 			return errMsg(fmt.Errorf("failed to read option file:\n%v", err))
 		}
-		var options Options
+		options := make(map[string]Option)
 		if err := json.Unmarshal(optionFile, &options); err != nil {
 			return errMsg(fmt.Errorf("failed to unmarshal options json:\n%v", err))
 		}
 
-		var programs []string
-		var configs []string
+		var optionNames []string
 
-		for program := range options.Programs {
-			programs = append(programs, program)
+		for option := range options {
+			optionNames = append(optionNames, option)
 		}
-		for config := range options.Configs {
-			configs = append(configs, config)
-		}
+		slices.Sort(optionNames)
 		return optionsMsg{
-			options:      options,
-			programNames: programs,
-			configNames:  configs,
+			options:     options,
+			optionNames: optionNames,
 		}
+	}
+}
+
+type delimitedOptionsMsg struct {
+	optionNames []string
+}
+
+func (model *Model) delimitOptions() tea.Cmd {
+	return func() tea.Msg {
+		var delimiter string
+		var optionNames []string
+		switch model.displayMode {
+		case combinedDisplay:
+			for key := range model.options {
+				optionNames = append(optionNames, key)
+			}
+			slices.Sort(optionNames)
+			return delimitedOptionsMsg{optionNames: optionNames}
+		case programDisplay:
+			delimiter = "program"
+		case configDisplay:
+			delimiter = "config"
+		}
+		for key, value := range model.options {
+			if value.Type == delimiter {
+				optionNames = append(optionNames, key)
+			}
+		}
+		slices.Sort(optionNames)
+		return delimitedOptionsMsg{optionNames: optionNames}
 	}
 }
 
@@ -110,30 +135,26 @@ type searchMsg struct {
 func (model *Model) searchOptions(searchValue string) tea.Cmd {
 	return func() tea.Msg {
 		var searchResults []string
-		for _, option := range model.programNames {
+		for _, option := range model.optionNames {
 			if strings.Contains(strings.ToLower(option), strings.ToLower(searchValue)) {
 				searchResults = append(searchResults, option)
 			}
 		}
-		for _, option := range model.configNames {
-			if strings.Contains(strings.ToLower(option), strings.ToLower(searchValue)) {
-				searchResults = append(searchResults, option)
-			}
-		}
+		slices.Sort(searchResults)
 		return searchMsg{searchResults: searchResults}
-	}	
+	}
 }
 
-type tableCreatedMsg struct{
+type tableCreatedMsg struct {
 	tableRows []table.Row
 }
 
 func (model *Model) createTable() tea.Cmd {
 	return func() tea.Msg {
-			var tableRows []table.Row
-			for _, option := range model.selectedNames {
-				tableRows = append(tableRows, table.Row{option})
-			}
+		var tableRows []table.Row
+		for _, option := range model.selectedNames {
+			tableRows = append(tableRows, table.Row{option})
+		}
 		return tableCreatedMsg{tableRows: tableRows}
 	}
 }

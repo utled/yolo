@@ -11,19 +11,9 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-type Options struct {
-	Programs map[string]Program `json:"programs"`
-	Configs  map[string]Config  `json:"configs"`
-}
-
-type Program struct {
-	Description string `json:"description"`
-	RunCommand  string `json:"runcommand"`
-}
-
-type Config struct {
-	Description string `json:"description"`
-	FullPath    string `json:"fullpath"`
+type Option struct {
+	Type          string `json:"type"`
+	CommandOrPath string `json:"commandorpath"`
 }
 
 type displayMode int
@@ -40,12 +30,11 @@ type Model struct {
 	displayMode   displayMode
 	errorActive   bool
 	filepath      string
-	options       Options
-	programNames  []string
-	configNames   []string
+	options       map[string]Option
+	optionNames   []string
+	optionsTable  table.Model
 	selectedNames []string
 	searchInput   textinput.Model
-	optionsTable  table.Model
 }
 
 func NewModel() Model {
@@ -77,7 +66,7 @@ func NewModel() Model {
 
 	return Model{
 		filepath:     filepath,
-		searchInput: searchInputField,
+		searchInput:  searchInputField,
 		optionsTable: optionsTable,
 	}
 }

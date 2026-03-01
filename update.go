@@ -16,16 +16,7 @@ func (model *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return model, model.searchOptions(newInput)
 	}
 	if newInput != oldInput && newInput == "" {
-		switch model.displayMode{
-		case combinedDisplay:
-			model.selectedNames = model.programNames
-			model.selectedNames = append(model.selectedNames, model.configNames...)
-		case programDisplay:
-			model.selectedNames = model.programNames
-		case configDisplay:
-			model.selectedNames = model.configNames
-		}
-		return model, model.createTable()
+		return model, model.delimitOptions()
 	}
 
 	switch msg := msg.(type) {
@@ -46,10 +37,11 @@ func (model *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return model, model.getOptions()
 	case optionsMsg:
 		model.options = msg.options
-		model.programNames = msg.programNames
-		model.configNames = msg.configNames
-		model.selectedNames = msg.programNames
-		model.selectedNames = append(model.selectedNames, msg.configNames...)
+		model.optionNames = msg.optionNames
+		model.selectedNames = msg.optionNames
+		return model, model.createTable()
+	case delimitedOptionsMsg:
+		model.selectedNames = msg.optionNames
 		return model, model.createTable()
 	case searchMsg:
 		model.selectedNames = msg.searchResults
@@ -74,17 +66,7 @@ func (model *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return model, cmd	
 		case tea.KeyTab:
 			model.displayMode = (model.displayMode + 1) % 3
-			switch model.displayMode{
-			case combinedDisplay:
-				model.selectedNames = model.programNames
-				model.selectedNames = append(model.selectedNames, model.configNames...)
-			case programDisplay:
-				model.selectedNames = model.programNames
-			case configDisplay:
-				model.selectedNames = model.configNames
-			}
-			return model, model.createTable()
-			
+			return model, model.delimitOptions()
 		case tea.KeyEnter:
 			switch model.displayMode {
 			case programDisplay:
