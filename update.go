@@ -9,8 +9,9 @@ func (model *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		model.width = msg.Width
 		model.height = msg.Height
-		h, _ := model.docStyle.GetFrameSize()
-		model.mainList.SetSize(msg.Width-h, 20)
+		model.optionsTable.SetWidth(msg.Width)
+		model.optionsTable.SetHeight(msg.Height - 1)
+		model.optionsTable.Columns()[0].Width = msg.Width
 	case errMsg:
 		model.errorActive = true
 		return model, nil
@@ -23,19 +24,16 @@ func (model *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		model.options = msg.options
 		model.programNames = msg.programNames
 		model.configNames = msg.configNames
-		return model, model.createListItems()
-	case listItemsMsg:
-		model.programListItems = msg.programList
-		model.configListItems = msg.configList
-		model.combinedListItems = msg.combinedList
-
-		var cmds []tea.Cmd
-		var cmd tea.Cmd
-		cmds = append(cmds, model.mainList.SetItems(model.combinedListItems))
-		model.mainList, cmd = model.mainList.Update(msg)
-		cmds = append(cmds, cmd)
-
-		return model, tea.Batch(cmds...)
+		model.selectedNames = msg.programNames
+		model.selectedNames = append(model.selectedNames, msg.configNames...)
+		return model, model.createTable()
+	case searchMsg:
+		model.selectedNames = msg.searchResults
+		return model, model.createTable()
+	case tableCreatedMsg:
+		model.optionsTable.SetRows(msg.tableRows)
+		model.optionsTable.GotoTop()
+		return model, nil	
 	case processStartedMsg:
 		return nil, tea.Quit
 	case tea.KeyMsg:
@@ -45,32 +43,30 @@ func (model *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		switch msg.Type {
 		case tea.KeyEsc:
-			//return nil, tea.Quit
+			return nil, tea.Quit
+		case tea.KeyUp, tea.KeyDown:
+			var cmd tea.Cmd
+			model.optionsTable, cmd = model.optionsTable.Update(msg)
+			return model, cmd	
 		case tea.KeyTab:
 			model.displayMode = (model.displayMode + 1) % 3
 			switch model.displayMode{
 			case combinedDisplay:
-				model.mainList.SetItems(model.combinedListItems)
+				model.selectedNames = model.programNames
+				model.selectedNames = append(model.selectedNames, model.configNames...)
 			case programDisplay:
-				model.mainList.SetItems(model.programListItems)
+				model.selectedNames = model.programNames
 			case configDisplay:
-				model.mainList.SetItems(model.configListItems)
+				model.selectedNames = model.configNames
 			}
-			var cmd tea.Cmd
-			model.mainList, cmd = model.mainList.Update(msg)
-
-			return model, cmd
+			return model, model.createTable()
 			
 		case tea.KeyEnter:
 			switch model.displayMode {
 			case programDisplay:
 			case configDisplay:
 			}
-		case tea.KeyUp:
-		case tea.KeyDown:
 		}
 	}
-	var cmd tea.Cmd
-	model.mainList, cmd = model.mainList.Update(msg)
-	return model, cmd
+	return model, nil
 }

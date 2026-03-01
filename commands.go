@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/charmbracelet/bubbles/list"
+	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -102,44 +102,28 @@ func (model *Model) getOptions() tea.Cmd {
 	}
 }
 
-type listItemsMsg struct {
-	programList  []list.Item
-	configList   []list.Item
-	combinedList []list.Item
+type searchMsg struct {
+	searchResults []string
 }
 
-func (model *Model) createListItems() tea.Cmd {
+func (model *Model) searchOptions() tea.Cmd {
 	return func() tea.Msg {
-		var programList []list.Item
-		var configList []list.Item
-		var combinedList []list.Item
+		var searchResults []string
+		return searchMsg{searchResults: searchResults}
+	}	
+}
 
-		for _, program := range model.programNames {
-			programList = append(
-				programList,
-				listItem{
-					title:       program,
-					description: model.options.Programs[program].Description,
-				},
-			)
-		}
-		for _, config := range model.configNames {
-			configList = append(
-				configList,
-				listItem{
-					title:       config,
-					description: model.options.Configs[config].Description,
-				},
-			)
-		}
-		combinedList = append(combinedList, programList...)
-		combinedList = append(combinedList, configList...)
+type tableCreatedMsg struct{
+	tableRows []table.Row
+}
 
-		return listItemsMsg{
-			programList:  programList,
-			configList:   configList,
-			combinedList: combinedList,
-		}
+func (model *Model) createTable() tea.Cmd {
+	return func() tea.Msg {
+			var tableRows []table.Row
+			for _, option := range model.selectedNames {
+				tableRows = append(tableRows, table.Row{option})
+			}
+		return tableCreatedMsg{tableRows: tableRows}
 	}
 }
 

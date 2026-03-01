@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/charmbracelet/bubbles/list"
+	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -25,15 +25,6 @@ type Config struct {
 	FullPath    string `json:"fullpath"`
 }
 
-type listItem struct {
-	title       string
-	description string
-}
-
-func (item listItem) Title() string       { return item.title }
-func (item listItem) Description() string { return item.description }
-func (item listItem) FilterValue() string { return item.title }
-
 type displayMode int
 
 const (
@@ -43,19 +34,16 @@ const (
 )
 
 type Model struct {
-	width             int
-	height            int
-	docStyle          lipgloss.Style
-	displayMode       displayMode
-	errorActive       bool
-	filepath          string
-	options           Options
-	programNames      []string
-	configNames       []string
-	mainList          list.Model
-	combinedListItems []list.Item
-	programListItems  []list.Item
-	configListItems   []list.Item
+	width         int
+	height        int
+	displayMode   displayMode
+	errorActive   bool
+	filepath      string
+	options       Options
+	programNames  []string
+	configNames   []string
+	selectedNames []string
+	optionsTable  table.Model
 }
 
 func NewModel() Model {
@@ -64,16 +52,24 @@ func NewModel() Model {
 		log.Fatal("could not find user home dir:\n", err)
 	}
 	filepath := filepath.Join(homeDir, "/.yolo/optionFile.json")
-	mainList := list.New(
-		[]list.Item{
-			listItem{title: "default", description: "default"},
-		},
-		list.NewDefaultDelegate(), 0, 0,
+
+	optionsTable := table.New(
+		table.WithColumns([]table.Column{{Title: "", Width: 20}}),
+		table.WithFocused(true),
+		table.WithHeight(10),
+		table.WithRows([]table.Row{}),
 	)
+	tableStyle := table.DefaultStyles()
+	tableStyle.Selected = tableStyle.Header.
+		BorderForeground(lipgloss.Color("238")).
+		Background(lipgloss.Color("234")).
+		PaddingLeft(0).
+		Bold(true)
+	optionsTable.SetStyles(tableStyle)
+
 	return Model{
-		filepath: filepath,
-		docStyle: lipgloss.NewStyle().Margin(1, 2),
-		mainList: mainList,
+		filepath:     filepath,
+		optionsTable: optionsTable,
 	}
 }
 
