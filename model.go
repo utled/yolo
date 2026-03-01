@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/charmbracelet/bubbles/table"
+	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -43,6 +44,7 @@ type Model struct {
 	programNames  []string
 	configNames   []string
 	selectedNames []string
+	searchInput   textinput.Model
 	optionsTable  table.Model
 }
 
@@ -52,6 +54,12 @@ func NewModel() Model {
 		log.Fatal("could not find user home dir:\n", err)
 	}
 	filepath := filepath.Join(homeDir, "/.yolo/optionFile.json")
+
+	searchInputField := textinput.New()
+	searchInputField.Width = 20
+	searchInputField.Placeholder = ""
+	searchInputField.Prompt = ""
+	searchInputField.Focus()
 
 	optionsTable := table.New(
 		table.WithColumns([]table.Column{{Title: "", Width: 20}}),
@@ -69,6 +77,7 @@ func NewModel() Model {
 
 	return Model{
 		filepath:     filepath,
+		searchInput: searchInputField,
 		optionsTable: optionsTable,
 	}
 }

@@ -5,10 +5,34 @@ import (
 )
 
 func (model *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmds []tea.Cmd
+	oldInput := model.searchInput.Value()
+	var inputCmd tea.Cmd
+	model.searchInput, inputCmd = model.searchInput.Update(msg)
+	cmds = append(cmds, inputCmd)
+
+	newInput := model.searchInput.Value()
+	if newInput != oldInput && newInput != "" {
+		return model, model.searchOptions(newInput)
+	}
+	if newInput != oldInput && newInput == "" {
+		switch model.displayMode{
+		case combinedDisplay:
+			model.selectedNames = model.programNames
+			model.selectedNames = append(model.selectedNames, model.configNames...)
+		case programDisplay:
+			model.selectedNames = model.programNames
+		case configDisplay:
+			model.selectedNames = model.configNames
+		}
+		return model, model.createTable()
+	}
+
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		model.width = msg.Width
 		model.height = msg.Height
+		model.searchInput.Width = msg.Width
 		model.optionsTable.SetWidth(msg.Width)
 		model.optionsTable.SetHeight(msg.Height - 1)
 		model.optionsTable.Columns()[0].Width = msg.Width
@@ -68,5 +92,5 @@ func (model *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 	}
-	return model, nil
+	return model, tea.Batch(cmds...)
 }

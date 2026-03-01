@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
@@ -106,9 +107,19 @@ type searchMsg struct {
 	searchResults []string
 }
 
-func (model *Model) searchOptions() tea.Cmd {
+func (model *Model) searchOptions(searchValue string) tea.Cmd {
 	return func() tea.Msg {
 		var searchResults []string
+		for _, option := range model.programNames {
+			if strings.Contains(strings.ToLower(option), strings.ToLower(searchValue)) {
+				searchResults = append(searchResults, option)
+			}
+		}
+		for _, option := range model.configNames {
+			if strings.Contains(strings.ToLower(option), strings.ToLower(searchValue)) {
+				searchResults = append(searchResults, option)
+			}
+		}
 		return searchMsg{searchResults: searchResults}
 	}	
 }

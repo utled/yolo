@@ -37,7 +37,7 @@ func (model *Model) renderMain() string {
 		lipgloss.Top,
 		lipgloss.JoinVertical(
 			lipgloss.Left,
-			"search input field",
+			model.searchInput.View(),
 			model.optionsTable.View(),
 		),
 	)
