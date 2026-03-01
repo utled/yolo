@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"slices"
 	"strings"
+	"syscall"
 
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
@@ -161,16 +163,34 @@ func (model *Model) createTable() tea.Cmd {
 
 type processStartedMsg struct{}
 
-func (model *Model) launchProgram(launchCommand string) tea.Cmd {
+func (model *Model) launchProcess(optionName string) tea.Cmd {
 	return func() tea.Msg {
-		// launch program command
-		return processStartedMsg{}
-	}
-}
+		selectedOption := model.options[optionName]
+		var command *exec.Cmd
+		switch selectedOption.Type {
+		case "program":
+			command = exec.Command("hyprctl", "dispatch", "exec", selectedOption.CommandOrPath)
+		case "config":
+			_, err := os.Stat(selectedOption.CommandOrPath)
+			if err != nil {
+				return errMsg(err)
+			}
+			command = exec.Command("alacritty", "-e", "nvim", selectedOption.CommandOrPath)
+		}
 
-func (model *Model) launchConfig(filepath string) tea.Cmd {
-	return func() tea.Msg {
-		// launch Nvim with specified file
+		command.Stdout = nil
+		command.Stdin = nil
+		command.Stderr = nil
+		command.SysProcAttr = &syscall.SysProcAttr{
+			Setpgid: true,
+		}
+		err := command.Start()
+		if err != nil {
+			return errMsg(err)
+		}
+
+		command.Process.Release()
+
 		return processStartedMsg{}
 	}
 }

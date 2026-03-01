@@ -29,6 +29,7 @@ func (model *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		model.optionsTable.Columns()[0].Width = msg.Width
 	case errMsg:
 		model.errorActive = true
+		model.errMsg = msg.Error()
 		return model, nil
 	case optionsExistMsg:
 		if !msg.exists {
@@ -49,7 +50,7 @@ func (model *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tableCreatedMsg:
 		model.optionsTable.SetRows(msg.tableRows)
 		model.optionsTable.GotoTop()
-		return model, nil	
+		return model, nil
 	case processStartedMsg:
 		return nil, tea.Quit
 	case tea.KeyMsg:
@@ -59,19 +60,20 @@ func (model *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		switch msg.Type {
 		case tea.KeyEsc:
-			return nil, tea.Quit
+			if !model.errorActive {
+				return nil, tea.Quit
+			}
+			model.errorActive = false
+			return model, nil
 		case tea.KeyUp, tea.KeyDown:
 			var cmd tea.Cmd
 			model.optionsTable, cmd = model.optionsTable.Update(msg)
-			return model, cmd	
+			return model, cmd
 		case tea.KeyTab:
 			model.displayMode = (model.displayMode + 1) % 3
 			return model, model.delimitOptions()
 		case tea.KeyEnter:
-			switch model.displayMode {
-			case programDisplay:
-			case configDisplay:
-			}
+			return model, model.launchProcess(model.optionsTable.SelectedRow()[0])
 		}
 	}
 	return model, tea.Batch(cmds...)

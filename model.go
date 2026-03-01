@@ -29,6 +29,7 @@ type Model struct {
 	height        int
 	displayMode   displayMode
 	errorActive   bool
+	errMsg        string
 	filepath      string
 	options       map[string]Option
 	optionNames   []string
