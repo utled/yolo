@@ -55,13 +55,13 @@ func (model *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return model, tea.Quit
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "ctrl+c":
+		case "ctrl+c", "ctrl+q":
 			return model, tea.Quit
 		}
 		switch msg.Type {
 		case tea.KeyEsc:
 			if !model.errorActive {
-				return nil, tea.Quit
+				return model, tea.Quit
 			}
 			model.errorActive = false
 			return model, nil
