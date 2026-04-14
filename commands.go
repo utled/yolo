@@ -171,11 +171,17 @@ func (model *Model) launchProcess(optionName string) tea.Cmd {
 		case "program":
 			command = exec.Command("hyprctl", "dispatch", "exec", selectedOption.CommandOrPath)
 		case "config":
-			_, err := os.Stat(selectedOption.CommandOrPath)
+			path := selectedOption.CommandOrPath
+			if path[0] == '~' {
+				homeDir, err := os.UserHomeDir()
+				if err != nil { return err }
+				path = strings.Replace(path, "~", homeDir, 1)
+			}
+			_, err := os.Stat(path)
 			if err != nil {
 				return errMsg(err)
 			}
-			command = exec.Command("alacritty", "-e", "nvim", selectedOption.CommandOrPath)
+			command = exec.Command("alacritty", "-e", "nvim", path)
 		}
 
 		command.Stdout = nil
