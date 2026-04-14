@@ -52,11 +52,11 @@ func (model *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		model.optionsTable.GotoTop()
 		return model, nil
 	case processStartedMsg:
-		return nil, tea.Quit
+		return model, tea.Quit
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c":
-			return nil, tea.Quit
+			return model, tea.Quit
 		}
 		switch msg.Type {
 		case tea.KeyEsc:
