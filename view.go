@@ -8,15 +8,18 @@ func (model *Model) renderOverlay() string {
 	modalStyle := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(lipgloss.Color("238")).
-		Padding(0)//.
-		//Width(40)
+		Padding(1).
+		Width(model.width - 2)
 
 	form := lipgloss.JoinVertical(
 		lipgloss.Left,
-		//lipgloss.NewStyle().Bold(true).Render("Some Bold Text"),
-		lipgloss.NewStyle().Bold(false).Italic(true).Render(model.errMsg),
+		lipgloss.NewStyle().
+			Bold(false).
+			Italic(true).
+			Width(model.width - modalStyle.GetHorizontalPadding()).
+			Render(model.errMsg),
 		"",
-		lipgloss.NewStyle().Foreground(lipgloss.Color("238")).Render("Esc: Return to view"),
+		lipgloss.NewStyle().Foreground(lipgloss.Color("238")).Render("[Esc] to return"),
 	)
 
 	return lipgloss.Place(
