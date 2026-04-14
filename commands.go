@@ -68,7 +68,9 @@ func (model *Model) createDefaultOptions() tea.Cmd {
 		for key := range defaultOptions {
 			optionNames = append(optionNames, key)
 		}
-		slices.Sort(optionNames)
+		slices.SortFunc(optionNames, func(a, b string) int {
+			return strings.Compare(strings.ToLower(a), strings.ToLower(b))
+		})
 		return optionsMsg{
 			options:     defaultOptions,
 			optionNames: optionNames,
@@ -92,7 +94,9 @@ func (model *Model) getOptions() tea.Cmd {
 		for option := range options {
 			optionNames = append(optionNames, option)
 		}
-		slices.Sort(optionNames)
+		slices.SortFunc(optionNames, func(a, b string) int {
+			return strings.Compare(strings.ToLower(a), strings.ToLower(b))
+		})
 		return optionsMsg{
 			options:     options,
 			optionNames: optionNames,
@@ -113,7 +117,9 @@ func (model *Model) delimitOptions() tea.Cmd {
 			for key := range model.options {
 				optionNames = append(optionNames, key)
 			}
-			slices.Sort(optionNames)
+			slices.SortFunc(optionNames, func(a, b string) int {
+				return strings.Compare(strings.ToLower(a), strings.ToLower(b))
+			})
 			return delimitedOptionsMsg{optionNames: optionNames}
 		case programDisplay:
 			delimiter = "program"
@@ -125,7 +131,9 @@ func (model *Model) delimitOptions() tea.Cmd {
 				optionNames = append(optionNames, key)
 			}
 		}
-		slices.Sort(optionNames)
+		slices.SortFunc(optionNames, func(a, b string) int {
+			return strings.Compare(strings.ToLower(a), strings.ToLower(b))
+		})
 		return delimitedOptionsMsg{optionNames: optionNames}
 	}
 }
@@ -142,7 +150,9 @@ func (model *Model) searchOptions(searchValue string) tea.Cmd {
 				searchResults = append(searchResults, option)
 			}
 		}
-		slices.Sort(searchResults)
+		slices.SortFunc(searchResults, func(a, b string) int {
+			return strings.Compare(strings.ToLower(a), strings.ToLower(b))
+		})
 		return searchMsg{searchResults: searchResults}
 	}
 }
@@ -174,7 +184,9 @@ func (model *Model) launchProcess(optionName string) tea.Cmd {
 			path := selectedOption.CommandOrPath
 			if len(path) > 0 && path[0] == '~' {
 				homeDir, err := os.UserHomeDir()
-				if err != nil { return err }
+				if err != nil {
+					return err
+				}
 				path = strings.Replace(path, "~", homeDir, 1)
 			}
 			_, err := os.Stat(path)
