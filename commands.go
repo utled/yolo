@@ -172,7 +172,7 @@ func (model *Model) launchProcess(optionName string) tea.Cmd {
 			command = exec.Command("hyprctl", "dispatch", "exec", selectedOption.CommandOrPath)
 		case "config":
 			path := selectedOption.CommandOrPath
-			if path[0] == '~' {
+			if len(path) > 0 && path[0] == '~' {
 				homeDir, err := os.UserHomeDir()
 				if err != nil { return err }
 				path = strings.Replace(path, "~", homeDir, 1)
